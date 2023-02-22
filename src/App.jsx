@@ -3,16 +3,30 @@ import { GameBoard, TurnIndicator, WinnerModal } from "./components";
 import { TURNS } from "./constants";
 import { checkWinner, checkEndGame } from "./logic/board";
 import confetti from "canvas-confetti";
+import { resetGameFromStorage, saveGameToStorage } from "./logic/storage";
 
 function App() {
-  const [board, setBoard] = useState(Array(9).fill(null));
-  const [turn, setTurn] = useState(TURNS.X);
+  const [board, setBoard] = useState(() => {
+    const localBoard = window.localStorage.getItem("board");
+
+    if (localBoard) {
+      return JSON.parse(localBoard);
+    }
+
+    return Array(9).fill(null);
+  });
+  const [turn, setTurn] = useState(() => {
+    const localTurn = window.localStorage.getItem("turn");
+
+    return localTurn ?? TURNS.X;
+  });
   const [winner, setWinner] = useState(null);
 
   const resetGame = () => {
     setBoard(Array(9).fill(null));
     setTurn(TURNS.X);
     setWinner(null);
+    resetGameFromStorage();
   };
 
   const updateBoard = (index) => {
@@ -26,6 +40,11 @@ function App() {
     setTurn(newTurn);
 
     const newWinner = checkWinner(newBoard);
+
+    saveGameToStorage({
+      board: newBoard,
+      turn: newTurn,
+    });
 
     if (newWinner) {
       confetti();
